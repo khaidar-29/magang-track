@@ -1,7 +1,7 @@
 # Tahap 09 — Polish, Testing & Stabilisasi
 
 **Urutan:** 09 dari 09  
-**Tujuan:** Website dirapikan, diuji, seeder demo lengkap, dokumentasi akurat, siap ditampilkan / dipakai demo end-to-end.
+**Tujuan:** Website MagangTrack dirapikan, diuji, seeder demo lengkap, siap ditampilkan / dipakai demo end-to-end.
 
 ← Sebelumnya: [08 — Dashboard & Laporan](08-dashboard-laporan.md) · [Indeks](../../README.md)
 
@@ -15,7 +15,7 @@
 - Seeder demo kaya untuk presentasi 5–10 menit
 - Test case manual lulus
 - (Opsional) feature test otomatis
-- README instalasi final akurat
+- Cara install & akun demo di README akurat
 - Aplikasi stabil untuk demo penuh
 
 ---
@@ -176,16 +176,14 @@ $this->assertDatabaseHas('activity_logs', [
 
 ---
 
-## 6. Dokumentasi final di README utama
+## 6. README instalasi MagangTrack
 
-Pastikan [README.md](../../README.md) berisi & akurat:
+Pastikan README project menjelaskan cara menjalankan aplikasi:
 
-- [ ] Stack yang benar-benar dipakai (Bootstrap CDN, auth manual, PhpSpreadsheet, DomPDF)
-- [ ] 3 role (tanpa dosen)
-- [ ] Cara install tanpa npm
-- [ ] Akun demo
-- [ ] Link semua tahap 01–09
-- [ ] Alur bisnis singkat
+- [ ] Stack yang dipakai (Bootstrap CDN, auth manual, PhpSpreadsheet, DomPDF)
+- [ ] Cara install (`composer install`, `.env`, `migrate --seed`, `serve`) — tanpa npm
+- [ ] Akun demo (email + password)
+- [ ] Role yang ada (admin, mahasiswa, pembimbing industri)
 
 ---
 
@@ -210,7 +208,6 @@ Durasi ideal demo: **5–10 menit**.
 - [ ] `.env` tidak ada di remote
 - [ ] Tidak ada token/password mentah di kode atau history commit
 - [ ] Pesan commit jelas per fitur
-- [ ] `README` & `docs/tahapan` ikut ter-update
 - [ ] Branch utama bisa di-clone lalu `migrate --seed` jalan
 
 ---
@@ -224,7 +221,7 @@ Durasi ideal demo: **5–10 menit**.
 - [ ] UI cukup rapi untuk ditampilkan
 - [ ] Export Excel & PDF jalan
 - [ ] Isolasi role teruji
-- [ ] README akurat
+- [ ] Cara install & akun demo di README benar
 
 ---
 
@@ -250,8 +247,7 @@ Project dianggap selesai v1 jika:
 2. Alur log → approval → dokumen → nilai → laporan berjalan  
 3. Export Excel & PDF berhasil  
 4. Seeder demo cukup untuk presentasi  
-5. Dokumentasi tahap masih sesuai implementasi  
-
+5. Clone → install → `migrate --seed` → aplikasi jalan
 ---
 
 ## Selesai

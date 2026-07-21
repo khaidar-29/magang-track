@@ -16,7 +16,6 @@ Setelah tahap ini selesai, kamu punya:
 - Database MySQL `magangtrack` terkoneksi
 - Migrasi default Laravel (tabel `users`, `sessions`, dll.) sudah jalan
 - File `.env` lokal (tidak di-commit)
-- Struktur folder `docs/` tetap ada
 - `php artisan serve` berjalan tanpa error
 
 **Belum** dibuat di tahap ini: login custom, role, CRUD bisnis. Itu mulai tahap 02.
@@ -51,30 +50,22 @@ Ekstensi PHP yang biasanya dibutuhkan Laravel: `pdo_mysql`, `mbstring`, `openssl
 
 ## Langkah kerja (urut)
 
-### 1. Siapkan folder project
+### 1. Buat project Laravel
 
-Ada dua skenario:
-
-**A. Folder sudah berisi dokumentasi (seperti repo ini)**
-
-Buat project Laravel di subfolder sementara, lalu pindahkan isinya — **atau** install Laravel di folder kosong lalu salin folder `docs/` + `README.md` ke dalamnya.
-
-Cara yang paling aman jika folder sudah berisi file:
-
-```bash
-# dari parent folder
-composer create-project laravel/laravel magangtrack-app
-```
-
-Lalu salin `README.md` dan `docs/` dari repo dokumentasi ke dalam `magangtrack-app`, lalu kerjakan di situ.
-
-**B. Folder benar-benar kosong**
+Di folder kosong:
 
 ```bash
 composer create-project laravel/laravel .
 ```
 
-Pastikan setelah selesai struktur kira-kira seperti ini:
+Atau buat di subfolder lalu masuk ke dalamnya:
+
+```bash
+composer create-project laravel/laravel magangtrack
+cd magangtrack
+```
+
+Struktur inti MagangTrack setelah install:
 
 ```text
 magangtrack/
@@ -82,8 +73,6 @@ magangtrack/
 ├── bootstrap/
 ├── config/
 ├── database/
-├── docs/                    ← dokumentasi tahapan
-│   └── tahapan/
 ├── public/
 ├── resources/
 │   └── views/
@@ -91,10 +80,8 @@ magangtrack/
 ├── .env
 ├── .env.example
 ├── artisan
-├── composer.json
-└── README.md
+└── composer.json
 ```
-
 ---
 
 ### 2. Buat database MySQL
@@ -265,19 +252,6 @@ git remote -v
 
 ---
 
-### 8. Rapikan dokumentasi
-
-Pastikan folder docs ikut di repo:
-
-```text
-docs/tahapan/01-persiapan-setup.md
-docs/tahapan/02-autentikasi-role.md
-... (sampai 09)
-README.md
-```
-
----
-
 ## Struktur folder yang diharapkan setelah tahap 01
 
 ```text
@@ -310,7 +284,7 @@ routes/web.php          ← route `/` ke welcome-magang
 ## Kesalahan umum
 
 1. **Memasang Breeze “biar cepat”** — jangan. Auth dibuat manual di tahap 02 agar sesuai aturan project (Bootstrap CDN, tanpa npm).
-2. **`composer create-project` gagal karena folder tidak kosong** — pakai subfolder lalu pindahkan docs, atau bersihkan folder selain docs/README.
+2. **`composer create-project` gagal karena folder tidak kosong** — kerjakan di folder kosong, atau buat subfolder `magangtrack` lalu `cd` ke situ.
 3. **Bootstrap tidak muncul** — cek koneksi internet (CDN), cek typo URL CDN, pastikan view benar-benar `@extends('layouts.app')`.
 4. **Migrate error padahal MySQL jalan** — pastikan extension `pdo_mysql` aktif (`php -m | grep pdo_mysql`).
 
@@ -319,7 +293,7 @@ routes/web.php          ← route `/` ke welcome-magang
 ## Catatan
 
 Belum perlu buat fitur bisnis.  
-Fokus tahap 01: fondasi project agar tahap berikutnya lancar.
+Fokus tahap 01: fondasi aplikasi MagangTrack agar tahap berikutnya lancar.
 
 ---
 
