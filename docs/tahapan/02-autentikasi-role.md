@@ -1,7 +1,8 @@
 # Tahap 02 — Autentikasi & Role
 
 **Urutan:** 02 dari 09  
-**Tujuan:** User bisa login, sistem membedakan role, dan tiap role punya layout/dashboard awal.
+**Estimasi:** 3–5 jam  
+**Tujuan:** User bisa login/logout, sistem membedakan 3 role, tiap role punya dashboard awal, dan profil dasar berfungsi.
 
 ← Sebelumnya: [01 — Persiapan](01-persiapan-setup.md) · [Indeks](../../README.md) · Berikutnya: [03 — Master Data](03-master-data.md) →
 
@@ -9,161 +10,471 @@
 
 ## Yang dihasilkan di tahap ini
 
-- 4 role: `admin`, `mahasiswa`, `pembimbing_industri`, `dosen`
+- Auth manual: login, logout (tanpa register publik)
+- 3 role: `admin`, `mahasiswa`, `pembimbing_industri`
+- Kolom `role` + `is_active` di tabel `users`
 - Middleware pembatas akses per role
 - Redirect setelah login sesuai role
-- Halaman profil dasar (lihat & ubah data singkat)
-- Seeder user dummy untuk testing
+- Dashboard kosong (sambutan) per role
+- Halaman profil: lihat data, ubah nama/email, ubah password
+- Seeder 3 akun demo
 
 ---
 
 ## Menu yang aktif di tahap ini
 
-```
+```text
 ├── Login / Logout
-├── Dashboard (kosong dulu, beda sambutan per role)
+├── Dashboard (bedakan sambutan per role)
 └── Profil
-    ├── Lihat profil
+    ├── Lihat / ubah data
     └── Ubah password
 ```
 
 ---
 
+## Keputusan teknis
+
+| Topik | Keputusan |
+|-------|-----------|
+| Penyimpanan role | Kolom `users.role` (string) — **disarankan** |
+| Spatie Permission | Opsional nanti; **jangan** dipasang di tahap ini kecuali sudah paham |
+| Register publik | Tidak ada — user dibuat admin/seeder |
+| User nonaktif | `is_active = false` → **tolak login** |
+| Layout | Satu `layouts/app.blade.php`; menu nanti beda per role |
+
+---
+
 ## Langkah kerja (urut)
 
-### 1. Buat auth manual (tanpa Laravel UI / Breeze)
+### 1. Migration: role & is_active
 
-Buat controller + view sendiri:
+```bash
+php artisan make:migration add_role_and_is_active_to_users_table --table=users
+```
+
+Isi migration:
+
+```php
+public function up(): void
+{
+    Schema::table('users', function (Blueprint $table) {
+        $table->string('role', 50)->default('mahasiswa')->after('email');
+        $table->boolean('is_active')->default(true)->after('role');
+    });
+}
+
+public function down(): void
+{
+    Schema::table('users', function (Blueprint $table) {
+        $table->dropColumn(['role', 'is_active']);
+    });
+}
+```
+
+```bash
+php artisan migrate
+```
+
+---
+
+### 2. Update model `User`
+
+Di `app/Models/User.php`:
+
+- Tambahkan ke `$fillable`: `role`, `is_active`
+- Pastikan `password` di-cast `hashed` (Laravel 11 biasanya sudah)
+- Tambah helper:
+
+```php
+public function isAdmin(): bool
+{
+    return $this->role === 'admin';
+}
+
+public function isMahasiswa(): bool
+{
+    return $this->role === 'mahasiswa';
+}
+
+public function isPembimbingIndustri(): bool
+{
+    return $this->role === 'pembimbing_industri';
+}
+```
+
+Nilai role yang diizinkan hanya:
+
+```text
+admin | mahasiswa | pembimbing_industri
+```
+
+---
+
+### 3. Buat auth manual — LoginController
 
 ```bash
 php artisan make:controller Auth/LoginController
 ```
 
-Minimal yang dibuat:
-- Route `GET/POST /login`, `POST /logout`
-- Form login Blade (pakai layout Bootstrap CDN dari tahap 01)
-- Proses login dengan `Auth::attempt()`
-- Logout dengan `Auth::logout()`
+Contoh isi inti:
 
-Tidak perlu halaman register publik (user dibuat admin / seeder).
+```php
+<?php
 
-### 2. Tentukan penyimpanan role
+namespace App\Http\Controllers\Auth;
 
-Pilihan sederhana (disarankan di awal):
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
-- Tambah kolom `role` di tabel `users`  
-  nilai: `admin | mahasiswa | pembimbing_industri | dosen`
+class LoginController extends Controller
+{
+    public function showLoginForm()
+    {
+        return view('auth.login');
+    }
 
-Atau pakai package:
+    public function login(Request $request)
+    {
+        $credentials = $request->validate([
+            'email' => ['required', 'email'],
+            'password' => ['required'],
+        ]);
 
-```bash
-composer require spatie/laravel-permission
-php artisan vendor:publish --provider="Spatie\Permission\PermissionServiceProvider"
-php artisan migrate
+        $user = \App\Models\User::where('email', $credentials['email'])->first();
+
+        if ($user && ! $user->is_active) {
+            return back()->withErrors([
+                'email' => 'Akun nonaktif. Hubungi admin.',
+            ])->onlyInput('email');
+        }
+
+        if (Auth::attempt($credentials, $request->boolean('remember'))) {
+            $request->session()->regenerate();
+
+            return redirect()->intended($this->redirectTo(Auth::user()));
+        }
+
+        return back()->withErrors([
+            'email' => 'Email atau password salah.',
+        ])->onlyInput('email');
+    }
+
+    public function logout(Request $request)
+    {
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()->route('login');
+    }
+
+    protected function redirectTo($user): string
+    {
+        return match ($user->role) {
+            'admin' => route('admin.dashboard'),
+            'mahasiswa' => route('mahasiswa.dashboard'),
+            'pembimbing_industri' => route('pembimbing.dashboard'),
+            default => '/',
+        };
+    }
+}
 ```
 
-> Untuk belajar, kolom `role` di `users` sudah cukup. Spatie bisa ditambah nanti jika perlu permission lebih detail.
+---
 
-### 3. Buat migration kolom role (jika pakai cara sederhana)
+### 4. View login
 
-```bash
-php artisan make:migration add_role_to_users_table --table=users
+Buat `resources/views/auth/login.blade.php`:
+
+```blade
+@extends('layouts.app')
+
+@section('title', 'Login — MagangTrack')
+
+@section('content')
+<div class="row justify-content-center">
+    <div class="col-md-5">
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+                <h1 class="h4 mb-3">Login MagangTrack</h1>
+
+                <form method="POST" action="{{ route('login') }}">
+                    @csrf
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" name="email" value="{{ old('email') }}"
+                               class="form-control @error('email') is-invalid @enderror" required autofocus>
+                        @error('email') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Password</label>
+                        <input type="password" name="password"
+                               class="form-control @error('password') is-invalid @enderror" required>
+                        @error('password') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" name="remember" id="remember">
+                        <label class="form-check-label" for="remember">Ingat saya</label>
+                    </div>
+                    <button class="btn btn-primary w-100" type="submit">Masuk</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+@endsection
 ```
 
-Isi: kolom `role` string, default `mahasiswa`.
+---
 
-Jalankan:
-
-```bash
-php artisan migrate
-```
-
-### 4. Update model `User`
-
-- Tambahkan `role` ke `$fillable`
-- Buat helper sederhana, contoh: `isAdmin()`, `isMahasiswa()`, dll.
-
-### 5. Buat middleware role
+### 5. Middleware role
 
 ```bash
 php artisan make:middleware EnsureUserHasRole
 ```
 
-Logic singkat:
-- Ambil role yang diizinkan dari route
-- Jika user tidak cocok → abort `403`
+Contoh `app/Http/Middleware/EnsureUserHasRole.php`:
 
-Daftarkan middleware di Laravel (bootstrap/app.php atau alias middleware sesuai versi).
+```php
+<?php
 
-### 6. Atur redirect setelah login
+namespace App\Http\Middleware;
 
-Di `LoginController` setelah login sukses:
-- `admin` → `/admin/dashboard`
-- `mahasiswa` → `/mahasiswa/dashboard`
-- `pembimbing_industri` → `/pembimbing/dashboard`
-- `dosen` → `/dosen/dashboard`
+use Closure;
+use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
-### 7. Buat route & controller dashboard per role
+class EnsureUserHasRole
+{
+    public function handle(Request $request, Closure $next, string ...$roles): Response
+    {
+        $user = $request->user();
 
-Contoh route:
+        if (! $user || ! in_array($user->role, $roles, true)) {
+            abort(403, 'Anda tidak memiliki akses ke halaman ini.');
+        }
 
-```text
-/admin/dashboard
-/mahasiswa/dashboard
-/pembimbing/dashboard
-/dosen/dashboard
+        return $next($request);
+    }
+}
 ```
 
-Tiap halaman cukup tampilkan nama user + role dulu.
+Daftarkan alias di `bootstrap/app.php` (Laravel 11):
 
-### 8. Proteksi route
+```php
+->withMiddleware(function (Middleware $middleware) {
+    $middleware->alias([
+        'role' => \App\Http\Middleware\EnsureUserHasRole::class,
+    ]);
+})
+```
 
-Contoh:
-- Route admin hanya `role:admin`
-- Route mahasiswa hanya `role:mahasiswa`
-- dst.
+---
 
-Uji: login sebagai mahasiswa, buka URL admin → harus ditolak.
+### 6. Route auth + dashboard
 
-### 9. Halaman profil dasar
+Di `routes/web.php` (pola):
 
-- Lihat nama, email, role
-- Form ubah nama / email
-- Form ubah password (validasi `current_password` + konfirmasi password baru)
+```php
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Mahasiswa\DashboardController as MahasiswaDashboardController;
+use App\Http\Controllers\Pembimbing\DashboardController as PembimbingDashboardController;
+use App\Http\Controllers\ProfileController;
 
-### 10. Seeder user dummy
+Route::get('/', function () {
+    if (! auth()->check()) {
+        return redirect()->route('login');
+    }
 
-Buat 4 akun:
+    return match (auth()->user()->role) {
+        'admin' => redirect()->route('admin.dashboard'),
+        'mahasiswa' => redirect()->route('mahasiswa.dashboard'),
+        'pembimbing_industri' => redirect()->route('pembimbing.dashboard'),
+        default => redirect()->route('login'),
+    };
+});
+
+Route::middleware('guest')->group(function () {
+    Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
+    Route::post('/login', [LoginController::class, 'login']);
+});
+
+Route::post('/logout', [LoginController::class, 'logout'])
+    ->middleware('auth')
+    ->name('logout');
+
+Route::middleware('auth')->group(function () {
+    Route::get('/profil', [ProfileController::class, 'edit'])->name('profil.edit');
+    Route::put('/profil', [ProfileController::class, 'update'])->name('profil.update');
+    Route::put('/profil/password', [ProfileController::class, 'updatePassword'])->name('profil.password');
+
+    Route::middleware('role:admin')->prefix('admin')->name('admin.')->group(function () {
+        Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
+    });
+
+    Route::middleware('role:mahasiswa')->prefix('mahasiswa')->name('mahasiswa.')->group(function () {
+        Route::get('/dashboard', [MahasiswaDashboardController::class, 'index'])->name('dashboard');
+    });
+
+    Route::middleware('role:pembimbing_industri')->prefix('pembimbing')->name('pembimbing.')->group(function () {
+        Route::get('/dashboard', [PembimbingDashboardController::class, 'index'])->name('dashboard');
+    });
+});
+```
+
+> Tip: untuk redirect `/` setelah login, cukup panggil ulang logic `match` role di closure agar tidak perlu method publik tambahan.
+
+Buat 3 controller dashboard sederhana yang return view sambutan (nama + role).
+
+---
+
+### 7. Navigasi di layout
+
+Update navbar:
+
+- Jika guest: tombol Login
+- Jika auth: link Dashboard (sesuai role), Profil, form Logout (`POST` + `@csrf`)
+
+Contoh form logout:
+
+```blade
+<form action="{{ route('logout') }}" method="POST" class="d-inline">
+    @csrf
+    <button type="submit" class="btn btn-outline-light btn-sm">Logout</button>
+</form>
+```
+
+---
+
+### 8. Halaman profil
+
+```bash
+php artisan make:controller ProfileController
+```
+
+Fitur wajib:
+
+1. Tampilkan nama, email, role (role read-only)
+2. Ubah nama & email (email unik kecuali milik sendiri)
+3. Ubah password: wajib `current_password`, `password` + `confirmed`, min 8 karakter
+
+Validasi password update (inti):
+
+```php
+$request->validate([
+    'current_password' => ['required', 'current_password'],
+    'password' => ['required', 'confirmed', 'min:8'],
+]);
+```
+
+---
+
+### 9. Seeder user demo
+
+Buat / edit `database/seeders/UserSeeder.php` atau `DatabaseSeeder`:
+
+```php
+use App\Models\User;
+use Illuminate\Support\Facades\Hash;
+
+User::updateOrCreate(
+    ['email' => 'admin@demo.test'],
+    [
+        'name' => 'Admin Demo',
+        'password' => Hash::make('password'),
+        'role' => 'admin',
+        'is_active' => true,
+    ]
+);
+
+User::updateOrCreate(
+    ['email' => 'mahasiswa@demo.test'],
+    [
+        'name' => 'Mahasiswa Demo',
+        'password' => Hash::make('password'),
+        'role' => 'mahasiswa',
+        'is_active' => true,
+    ]
+);
+
+User::updateOrCreate(
+    ['email' => 'industri@demo.test'],
+    [
+        'name' => 'Pembimbing Industri Demo',
+        'password' => Hash::make('password'),
+        'role' => 'pembimbing_industri',
+        'is_active' => true,
+    ]
+);
+```
+
+```bash
+php artisan db:seed
+```
 
 | Email | Role | Password |
 |-------|------|----------|
 | admin@demo.test | admin | password |
 | mahasiswa@demo.test | mahasiswa | password |
 | industri@demo.test | pembimbing_industri | password |
-| dosen@demo.test | dosen | password |
 
-```bash
-php artisan db:seed
-```
+---
+
+### 10. Halaman 403 (opsional tapi bagus)
+
+Buat `resources/views/errors/403.blade.php` yang extends layout, teks ramah: “Akses ditolak”.
+
+---
+
+## Isolasi yang wajib diuji
+
+| Aksi | Hasil diharapkan |
+|------|------------------|
+| Login admin | Masuk `/admin/dashboard` |
+| Login mahasiswa | Masuk `/mahasiswa/dashboard` |
+| Login industri | Masuk `/pembimbing/dashboard` |
+| Mahasiswa buka `/admin/dashboard` | 403 |
+| User `is_active=false` login | Ditolak |
+| Logout | Session hilang, kembali ke login |
+| Sudah login buka `/login` | Redirect ke dashboard (middleware `guest`) |
 
 ---
 
 ## Checklist selesai
 
-- [ ] 4 akun dummy bisa login
-- [ ] Tiap role masuk ke dashboard masing-masing
-- [ ] Mahasiswa tidak bisa akses halaman admin
-- [ ] Logout berfungsi
-- [ ] Profil bisa dibuka dan password bisa diganti
+- [ ] Migration `role` + `is_active` jalan
+- [ ] Helper role di model `User`
+- [ ] Login / logout manual berfungsi
+- [ ] User nonaktif tidak bisa login
+- [ ] Middleware `role` terdaftar di `bootstrap/app.php`
+- [ ] 3 dashboard route terproteksi
+- [ ] Redirect setelah login sesuai role
+- [ ] Profil: ubah data + ubah password
+- [ ] 3 akun demo bisa login
+- [ ] Mahasiswa tidak bisa akses URL admin
 
 ---
 
 ## Cara uji cepat
 
-1. Login `admin@demo.test` → masuk dashboard admin  
+1. Login `admin@demo.test` / `password` → dashboard admin  
 2. Logout  
-3. Login `mahasiswa@demo.test` → masuk dashboard mahasiswa  
-4. Tempel URL `/admin/dashboard` → muncul 403 / redirect  
+3. Login `mahasiswa@demo.test` → dashboard mahasiswa  
+4. Tempel URL `/admin/dashboard` → 403  
+5. Ubah password di profil → logout → login dengan password baru  
+
+---
+
+## Kesalahan umum
+
+1. **Lupa `session()->regenerate()` setelah login** — rawan session fixation.
+2. **Logout pakai GET** — harus `POST` + CSRF.
+3. **Middleware alias belum didaftarkan** — error “Target class [role] does not exist”.
+4. **Password disimpan plain text di seeder** — wajib `Hash::make()` atau cast `hashed` + plain saat create via model dengan benar.
+5. **Memasang Spatie di awal** — menambah kompleksitas; kolom `role` sudah cukup untuk project ini.
 
 ---
 

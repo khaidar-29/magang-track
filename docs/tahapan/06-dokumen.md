@@ -1,7 +1,8 @@
-# Tahap 06 — Dokumen
+# Tahap 06 — Upload Dokumen
 
 **Urutan:** 06 dari 09  
-**Tujuan:** Mahasiswa bisa mengunggah dokumen magang; pihak terkait bisa mengunduh sesuai hak akses.
+**Estimasi:** 3–5 jam  
+**Tujuan:** Mahasiswa mengunggah dokumen magang; pembimbing/admin bisa melihat & mengunduh dengan kontrol akses; file disimpan privat (bukan langsung di `public/`).
 
 ← Sebelumnya: [05 — Log Kegiatan](05-log-kegiatan.md) · [Indeks](../../README.md) · Berikutnya: [07 — Penilaian](07-penilaian.md) →
 
@@ -9,145 +10,269 @@
 
 ## Yang dihasilkan di tahap ini
 
-- Upload dokumen per jenis
+- Tabel `documents`
+- Upload dokumen terkait **internship** (bukan per-log)
 - Validasi tipe & ukuran file
-- Penyimpanan lewat Laravel Storage
-- Download terproteksi
-- Daftar dokumen per mahasiswa / per internship
+- Penyimpanan di disk privat
+- Download lewat route terproteksi
+- Hapus dokumen (DB + file)
+- Policy isolasi
 
 ---
 
-## Menu yang aktif di tahap ini
+## Menu yang aktif
 
-```
+```text
 ├── Dokumen
 │   ├── Daftar dokumen
-│   ├── Upload dokumen
-│   └── Unduh dokumen
+│   ├── Upload dokumen          ← Mahasiswa (+ Admin boleh bantu)
+│   ├── Download
+│   └── Hapus                   ← Pemilik / Admin
 ```
 
 ---
 
-## Jenis dokumen (awal)
+## Jenis dokumen
 
-| Kode | Nama |
-|------|------|
-| proposal | Proposal magang |
-| acceptance_letter | Surat penerimaan |
-| weekly_report | Laporan mingguan |
-| final_report | Laporan akhir |
-| certificate | Sertifikat |
-| other | Lainnya |
+| Kode `type` | Label tampilan |
+|-------------|----------------|
+| `proposal` | Proposal magang |
+| `acceptance_letter` | Surat penerimaan |
+| `weekly_report` | Laporan mingguan |
+| `final_report` | Laporan akhir |
+| `certificate` | Sertifikat |
+| `other` | Lainnya |
 
-Boleh disimpan sebagai enum/string di kolom `type`.
+Aturan jumlah file:
+
+- Boleh **banyak file** per internship (termasuk type sama), **atau**
+- Satu file per `type` (upload baru menimpa)  
+
+**Keputusan project ini:** boleh banyak file; bedakan lewat `title` + tanggal upload. Lebih fleksibel untuk laporan mingguan.
 
 ---
 
 ## Field `documents`
 
-| Field | Keterangan |
-|-------|------------|
-| internship_id | Penempatan terkait |
-| uploaded_by | User pengunggah |
-| type | Jenis dokumen |
-| title | Judul tampilan |
-| file_path | Path di storage |
-| file_name | Nama asli file |
-| mime_type | MIME |
-| file_size | Ukuran byte |
-| notes | Opsional |
+| Field | Tipe | Keterangan |
+|-------|------|------------|
+| internship_id | FK | Penempatan |
+| uploaded_by | FK users | Siapa yang upload |
+| type | string | Lihat tabel jenis |
+| title | string | Judul dokumen |
+| file_path | string | Path relatif di storage |
+| original_name | string | Nama file asli |
+| mime | string | MIME type |
+| size | unsignedInteger | Byte |
+| timestamps | | |
 
 ---
 
-## Aturan
+## Aturan akses
 
-1. Hanya mahasiswa pemilik internship yang boleh upload (admin boleh bantu jika perlu).
-2. Pembimbing industri & dosen bimbingan boleh lihat/unduh.
-3. Batasi ekstensi: `pdf`, `jpg`, `jpeg`, `png`, `doc`, `docx`.
-4. Batasi ukuran: misalnya max **2MB** atau **5MB**.
-5. Jangan taruh file sensitif langsung di folder public tanpa kontrol akses.
+| Aksi | Admin | Mahasiswa pemilik | Pembimbing assign |
+|------|:-----:|:-----------------:|:-----------------:|
+| Lihat daftar | ✓ semua | ✓ milik | ✓ bimbingan |
+| Upload | ✓ (boleh bantu) | ✓ | — |
+| Download | ✓ | ✓ | ✓ |
+| Hapus | ✓ | ✓ milik sendiri | — |
+
+Aturan lain:
+
+1. Upload hanya jika internship `active` (atau `completed` untuk arsip — **disarankan: active & completed**).
+2. Ekstensi: `pdf`, `jpg`, `jpeg`, `png`, `doc`, `docx`.
+3. Ukuran max: **2048 KB (2MB)**.
+4. Jangan simpan di `public/` tanpa proteksi. Pakai `storage/app/private/documents/...` atau disk `local`.
+5. Saat hapus: hapus record **dan** file fisik.
 
 ---
 
 ## Langkah kerja (urut)
 
-### 1. Migration + model
+### 1. Migration + model + policy
 
 ```bash
 php artisan make:model Document -m
+php artisan make:policy DocumentPolicy --model=Document
 ```
+
+```php
+Schema::create('documents', function (Blueprint $table) {
+    $table->id();
+    $table->foreignId('internship_id')->constrained()->cascadeOnDelete();
+    $table->foreignId('uploaded_by')->constrained('users')->cascadeOnDelete();
+    $table->string('type', 50);
+    $table->string('title');
+    $table->string('file_path');
+    $table->string('original_name');
+    $table->string('mime', 100);
+    $table->unsignedInteger('size');
+    $table->timestamps();
+
+    $table->index(['internship_id', 'type']);
+});
+```
+
+---
 
 ### 2. Relasi
 
-- `Internship` hasMany `Document`
-- `Document` belongsTo `Internship`
-- `Document` belongsTo uploader (`User`)
+```php
+// Document
+public function internship() { return $this->belongsTo(Internship::class); }
+public function uploader() { return $this->belongsTo(User::class, 'uploaded_by'); }
 
-### 3. Form upload
-
-Field form:
-- jenis dokumen
-- judul
-- file
-- catatan (opsional)
-
-Validasi contoh:
-
-```text
-type: required
-title: required|string|max:150
-file: required|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:2048
+// Internship
+public function documents() { return $this->hasMany(Document::class); }
 ```
 
-### 4. Simpan file
+---
 
-Pakai storage disk `local` (private) lalu unduh via controller:
+### 3. Form upload + validasi
 
-```text
-storage/app/documents/...
+```php
+'title' => ['required', 'string', 'max:150'],
+'type' => ['required', 'in:proposal,acceptance_letter,weekly_report,final_report,certificate,other'],
+'file' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png,doc,docx', 'max:2048'],
 ```
 
-Simpan metadata ke tabel `documents`.
+Form Blade: `enctype="multipart/form-data"`.
+
+---
+
+### 4. Simpan file (private)
+
+Contoh di `store`:
+
+```php
+$file = $request->file('file');
+$path = $file->store('documents/'.$internship->id, 'local');
+
+Document::create([
+    'internship_id' => $internship->id,
+    'uploaded_by' => auth()->id(),
+    'type' => $request->type,
+    'title' => $request->title,
+    'file_path' => $path,
+    'original_name' => $file->getClientOriginalName(),
+    'mime' => $file->getClientMimeType(),
+    'size' => $file->getSize(),
+]);
+```
+
+Pastikan folder writable. Disk `local` default mengarah ke `storage/app/private` di Laravel baru, atau `storage/app` di beberapa versi — cek `config/filesystems.php` dan sesuaikan.
+
+**Jangan** pakai `storePublicly` untuk dokumen sensitif.
+
+---
 
 ### 5. Daftar dokumen
 
-Tampilkan:
-- judul, jenis, tanggal upload, ukuran
-- tombol unduh
-- tombol hapus (hanya pemilik / admin, dan hanya jika diizinkan)
+Index scoped mirip internship:
+
+- Mahasiswa: dokumen internship miliknya
+- Pembimbing: dokumen internship bimbingan
+- Admin: semua + filter
+
+Tampilkan: judul, jenis, nama file, ukuran (KB), tanggal, tombol unduh/hapus.
+
+Format ukuran:
+
+```php
+number_format($document->size / 1024, 1) . ' KB'
+```
+
+---
 
 ### 6. Download terproteksi
 
-Buat route download yang:
-1. Cek auth
-2. Cek policy (apakah user berhak)
-3. Baru `Storage::download(...)`
+```text
+GET /documents/{document}/download
+```
 
-Jangan expose path mentah ke user tanpa cek.
+```php
+public function download(Document $document)
+{
+    $this->authorize('download', $document);
+
+    return Storage::disk('local')->download(
+        $document->file_path,
+        $document->original_name
+    );
+}
+```
+
+Jangan expose path mentah ke user.
+
+---
 
 ### 7. Hapus dokumen
 
-Hapus record + hapus file fisik di storage.  
-Pakai konfirmasi di UI.
+```php
+public function destroy(Document $document)
+{
+    $this->authorize('delete', $document);
+
+    Storage::disk('local')->delete($document->file_path);
+    $document->delete();
+
+    return back()->with('success', 'Dokumen dihapus.');
+}
+```
+
+Konfirmasi di UI sebelum hapus.
+
+---
+
+### 8. Policy singkat
+
+```php
+public function download(User $user, Document $document): bool
+{
+    $internship = $document->internship;
+
+    return $user->isAdmin()
+        || $internship->student_id === $user->id
+        || $internship->industrial_supervisor_id === $user->id;
+}
+```
+
+Mirip untuk `view`, `delete` (delete: admin atau student pemilik).
 
 ---
 
 ## Checklist selesai
 
-- [ ] Mahasiswa bisa upload dokumen valid
-- [ ] File ilegal / oversized ditolak
-- [ ] Pembimbing bisa unduh dokumen mahasiswa bimbingannya
-- [ ] Orang lain tidak bisa unduh dokumen sembarang
-- [ ] Hapus dokumen menghapus file di storage
+- [ ] Migration `documents` jalan
+- [ ] Upload berhasil untuk tipe yang diizinkan
+- [ ] File > 2MB ditolak
+- [ ] Ekstensi ilegal ditolak
+- [ ] File tersimpan di disk privat (bukan URL publik langsung)
+- [ ] Download hanya untuk yang berhak
+- [ ] Hapus menghilangkan file + record
+- [ ] Pembimbing hanya lihat dokumen bimbingan
+- [ ] Form memakai `multipart/form-data`
 
 ---
 
 ## Cara uji cepat
 
-1. Login mahasiswa → upload PDF laporan  
-2. Coba upload file `.exe` → harus gagal  
-3. Login pembimbing → unduh dokumen tersebut berhasil  
-4. Login mahasiswa lain → tidak bisa unduh dokumen orang lain  
+1. Login mahasiswa → upload PDF laporan → muncul di daftar  
+2. Klik unduh → file terbuka/terunduh  
+3. Coba upload `.exe` / file 10MB → ditolak  
+4. Login industri → bisa unduh dokumen mahasiswa bimbingan  
+5. Login pembimbing lain → tidak bisa unduh (403)  
+6. Hapus dokumen → file hilang dari storage  
+
+---
+
+## Kesalahan umum
+
+1. **Lupa `enctype` di form** — file tidak terkirim.
+2. **Simpan di `public/` lalu link langsung** — siapa saja yang tahu URL bisa unduh.
+3. **Hapus DB saja** — storage penuh file yatim.
+4. **`mimes` vs `mimetypes`** — ikuti rule Laravel; uji dengan file nyata.
+5. **Path traversal di nama file** — pakai `store()` + `original_name` hanya untuk label download, bukan path.
 
 ---
 
