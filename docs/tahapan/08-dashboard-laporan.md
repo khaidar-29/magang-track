@@ -76,9 +76,11 @@ Kolom: mahasiswa, nilai industri, nilai dosen, nilai akhir
 Package yang dipakai:
 
 ```bash
-composer require maatwebsite/excel
+composer require phpoffice/phpspreadsheet
 composer require barryvdh/laravel-dompdf
 ```
+
+> Excel pakai **PhpSpreadsheet** langsung (bukan Maatwebsite Excel). PDF pakai **DomPDF**.
 
 ---
 
@@ -123,14 +125,15 @@ Form filter GET:
 - date_from / date_to
 - status
 
-### 4. Export Excel
+### 4. Export Excel (PhpSpreadsheet)
 
-Buat Export class per jenis rekap.  
-Tombol “Export Excel” memakai filter yang sama dengan halaman.
+Di controller/service, buat spreadsheet dengan `PhpOffice\PhpSpreadsheet\Spreadsheet`, isi header + baris data dari query berfilter, lalu unduh via `Xlsx` writer (`Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`).
 
-### 5. Export PDF
+Tombol “Export Excel” memakai filter yang sama dengan halaman laporan.
 
-Buat view PDF sederhana (kop, judul, tabel, tanggal cetak).  
+### 5. Export PDF (DomPDF)
+
+Buat view Blade PDF sederhana (kop, judul, tabel, tanggal cetak), lalu generate dengan `Barryvdh\DomPDF\Facade\Pdf`.  
 Pastikan readable saat diprint.
 
 ### 6. Notifikasi

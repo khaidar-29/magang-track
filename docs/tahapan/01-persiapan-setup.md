@@ -10,7 +10,7 @@
 ## Yang dihasilkan di tahap ini
 
 - Project Laravel 11 terinstall
-- Laravel Breeze (Blade + Tailwind) terpasang
+- Layout Blade dasar memakai Bootstrap 5 via CDN (tanpa npm, tanpa Tailwind, tanpa Laravel UI)
 - Database MySQL terkoneksi
 - File `.env.example` siap dibagikan
 - Struktur folder `docs/` sudah ada
@@ -22,7 +22,6 @@
 
 - PHP 8.2+
 - Composer
-- Node.js + NPM
 - MySQL
 - Git
 
@@ -31,10 +30,11 @@ Cek cepat:
 ```bash
 php -v
 composer -V
-node -v
 mysql --version
 git --version
 ```
+
+> Tidak perlu Node.js / npm. CSS & JS Bootstrap diambil dari CDN.
 
 ---
 
@@ -53,14 +53,18 @@ composer create-project laravel/laravel magangtrack
 cd magangtrack
 ```
 
-### 2. Pasang Breeze (Blade)
+### 2. Siapkan layout Bootstrap (CDN)
 
-```bash
-composer require laravel/breeze --dev
-php artisan breeze:install blade
-npm install
-npm run build
+Buat layout Blade dasar, misalnya `resources/views/layouts/app.blade.php`, dan masukkan Bootstrap 5 dari CDN:
+
+```html
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 ```
+
+Semua halaman nanti extends layout ini.
+
+> Jangan pasang Tailwind, Laravel UI, Laravel Breeze, atau `npm install`.
 
 ### 3. Setup environment
 
@@ -94,7 +98,7 @@ php artisan migrate
 php artisan serve
 ```
 
-Buka `http://127.0.0.1:8000` — halaman default Breeze harus muncul.
+Buka `http://127.0.0.1:8000` — Laravel harus jalan. Login/register dibuat di tahap 02.
 
 ### 6. Siapkan Git
 
@@ -102,7 +106,7 @@ Buka `http://127.0.0.1:8000` — halaman default Breeze harus muncul.
 git init
 # pastikan .env ada di .gitignore (default Laravel sudah)
 git add .
-git commit -m "chore: initial laravel + breeze setup"
+git commit -m "chore: initial laravel + bootstrap cdn setup"
 ```
 
 ### 7. Rapikan dokumentasi
@@ -124,7 +128,7 @@ project-magang/
 ## Checklist selesai
 
 - [ ] `php artisan serve` berjalan
-- [ ] Halaman login/register Breeze muncul
+- [ ] Layout Blade + Bootstrap CDN sudah ada
 - [ ] Koneksi database sukses (`migrate` tanpa error)
 - [ ] `.env` tidak ter-commit
 - [ ] Commit awal sudah dibuat
@@ -134,6 +138,7 @@ project-magang/
 ## Catatan
 
 Belum perlu buat fitur bisnis di tahap ini.  
+Auth (login/logout) dikerjakan di tahap 02 secara manual.  
 Fokusnya hanya fondasi project agar tahap berikutnya lancar.
 
 ---

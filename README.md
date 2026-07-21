@@ -11,10 +11,10 @@ Mahasiswa mencatat log harian, pembimbing menyetujui, lalu penilaian dan laporan
 | Bagian | Teknologi |
 |--------|-----------|
 | Backend | Laravel 11 |
-| Auth | Laravel Breeze (Blade) |
-| UI | Blade + Tailwind CSS |
+| Auth | Manual (controller + Blade) |
+| UI | Blade + Bootstrap 5 (CDN) |
 | Database | MySQL 8 |
-| Export | Maatwebsite Excel + DomPDF |
+| Export | PhpSpreadsheet + DomPDF |
 
 ---
 
@@ -78,7 +78,6 @@ cp .env.example .env
 php artisan key:generate
 # isi DB di .env
 php artisan migrate --seed
-npm install && npm run build
 php artisan serve
 ```
 

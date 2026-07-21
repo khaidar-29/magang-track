@@ -31,7 +31,23 @@
 
 ## Langkah kerja (urut)
 
-### 1. Tentukan penyimpanan role
+### 1. Buat auth manual (tanpa Laravel UI / Breeze)
+
+Buat controller + view sendiri:
+
+```bash
+php artisan make:controller Auth/LoginController
+```
+
+Minimal yang dibuat:
+- Route `GET/POST /login`, `POST /logout`
+- Form login Blade (pakai layout Bootstrap CDN dari tahap 01)
+- Proses login dengan `Auth::attempt()`
+- Logout dengan `Auth::logout()`
+
+Tidak perlu halaman register publik (user dibuat admin / seeder).
+
+### 2. Tentukan penyimpanan role
 
 Pilihan sederhana (disarankan di awal):
 
@@ -48,7 +64,7 @@ php artisan migrate
 
 > Untuk belajar, kolom `role` di `users` sudah cukup. Spatie bisa ditambah nanti jika perlu permission lebih detail.
 
-### 2. Buat migration kolom role (jika pakai cara sederhana)
+### 3. Buat migration kolom role (jika pakai cara sederhana)
 
 ```bash
 php artisan make:migration add_role_to_users_table --table=users
@@ -62,12 +78,12 @@ Jalankan:
 php artisan migrate
 ```
 
-### 3. Update model `User`
+### 4. Update model `User`
 
 - Tambahkan `role` ke `$fillable`
 - Buat helper sederhana, contoh: `isAdmin()`, `isMahasiswa()`, dll.
 
-### 4. Buat middleware role
+### 5. Buat middleware role
 
 ```bash
 php artisan make:middleware EnsureUserHasRole
@@ -79,15 +95,15 @@ Logic singkat:
 
 Daftarkan middleware di Laravel (bootstrap/app.php atau alias middleware sesuai versi).
 
-### 5. Atur redirect setelah login
+### 6. Atur redirect setelah login
 
-Di `LoginResponse` / `AuthenticatedSessionController` (Breeze):
+Di `LoginController` setelah login sukses:
 - `admin` → `/admin/dashboard`
 - `mahasiswa` → `/mahasiswa/dashboard`
 - `pembimbing_industri` → `/pembimbing/dashboard`
 - `dosen` → `/dosen/dashboard`
 
-### 6. Buat route & controller dashboard per role
+### 7. Buat route & controller dashboard per role
 
 Contoh route:
 
@@ -100,7 +116,7 @@ Contoh route:
 
 Tiap halaman cukup tampilkan nama user + role dulu.
 
-### 7. Proteksi route
+### 8. Proteksi route
 
 Contoh:
 - Route admin hanya `role:admin`
@@ -109,13 +125,13 @@ Contoh:
 
 Uji: login sebagai mahasiswa, buka URL admin → harus ditolak.
 
-### 8. Halaman profil dasar
+### 9. Halaman profil dasar
 
 - Lihat nama, email, role
 - Form ubah nama / email
-- Form ubah password (pakai fitur Breeze jika sudah ada)
+- Form ubah password (validasi `current_password` + konfirmasi password baru)
 
-### 9. Seeder user dummy
+### 10. Seeder user dummy
 
 Buat 4 akun:
 
