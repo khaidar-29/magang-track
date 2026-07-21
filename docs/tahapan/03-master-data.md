@@ -1,7 +1,6 @@
 # Tahap 03 — Master Data
 
 **Urutan:** 03 dari 09  
-**Estimasi:** 4–6 jam  
 **Tujuan:** Admin bisa mengelola data dasar yang dibutuhkan modul berikutnya: user, tempat magang, dan periode magang.
 
 ← Sebelumnya: [02 — Auth & Role](02-autentikasi-role.md) · [Indeks](../../README.md) · Berikutnya: [04 — Data Magang](04-data-magang.md) →

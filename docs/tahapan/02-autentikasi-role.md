@@ -1,7 +1,6 @@
 # Tahap 02 — Autentikasi & Role
 
 **Urutan:** 02 dari 09  
-**Estimasi:** 3–5 jam  
 **Tujuan:** User bisa login/logout, sistem membedakan 3 role, tiap role punya dashboard awal, dan profil dasar berfungsi.
 
 ← Sebelumnya: [01 — Persiapan](01-persiapan-setup.md) · [Indeks](../../README.md) · Berikutnya: [03 — Master Data](03-master-data.md) →

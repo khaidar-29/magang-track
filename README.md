@@ -111,17 +111,17 @@ MagangTrack
 
 Kerjakan **tahap 01 → 09**. Jangan loncat. Centang checklist di akhir tiap file sebelum lanjut.
 
-| Tahap | Fokus | Estimasi | File |
-|------:|-------|----------|------|
-| 01 | Persiapan & setup Laravel + layout Bootstrap CDN | 1–2 jam | [01-persiapan-setup.md](docs/tahapan/01-persiapan-setup.md) |
-| 02 | Login manual, role, middleware, dashboard kosong, profil | 3–5 jam | [02-autentikasi-role.md](docs/tahapan/02-autentikasi-role.md) |
-| 03 | Master data: user, perusahaan, periode | 4–6 jam | [03-master-data.md](docs/tahapan/03-master-data.md) |
-| 04 | Penempatan magang + policy isolasi data | 4–6 jam | [04-data-magang.md](docs/tahapan/04-data-magang.md) |
-| 05 | Log kegiatan + approval (modul inti) | 6–8 jam | [05-log-kegiatan.md](docs/tahapan/05-log-kegiatan.md) |
-| 06 | Upload & download dokumen | 3–5 jam | [06-dokumen.md](docs/tahapan/06-dokumen.md) |
-| 07 | Penilaian berbobot + kunci final | 4–6 jam | [07-penilaian.md](docs/tahapan/07-penilaian.md) |
-| 08 | Dashboard, laporan, export Excel/PDF, notifikasi | 5–7 jam | [08-dashboard-laporan.md](docs/tahapan/08-dashboard-laporan.md) |
-| 09 | Polish UI, hardening, seeder demo, testing | 3–5 jam | [09-polish-testing.md](docs/tahapan/09-polish-testing.md) |
+| Tahap | Fokus | File |
+|------:|-------|------|
+| 01 | Persiapan & setup Laravel + layout Bootstrap CDN | [01-persiapan-setup.md](docs/tahapan/01-persiapan-setup.md) |
+| 02 | Login manual, role, middleware, dashboard kosong, profil | [02-autentikasi-role.md](docs/tahapan/02-autentikasi-role.md) |
+| 03 | Master data: user, perusahaan, periode | [03-master-data.md](docs/tahapan/03-master-data.md) |
+| 04 | Penempatan magang + policy isolasi data | [04-data-magang.md](docs/tahapan/04-data-magang.md) |
+| 05 | Log kegiatan + approval (modul inti) | [05-log-kegiatan.md](docs/tahapan/05-log-kegiatan.md) |
+| 06 | Upload & download dokumen | [06-dokumen.md](docs/tahapan/06-dokumen.md) |
+| 07 | Penilaian berbobot + kunci final | [07-penilaian.md](docs/tahapan/07-penilaian.md) |
+| 08 | Dashboard, laporan, export Excel/PDF, notifikasi | [08-dashboard-laporan.md](docs/tahapan/08-dashboard-laporan.md) |
+| 09 | Polish UI, hardening, seeder demo, testing | [09-polish-testing.md](docs/tahapan/09-polish-testing.md) |
 
 Setiap file tahap berisi:
 - tujuan & hasil yang diharapkan
@@ -215,26 +215,6 @@ composer require barryvdh/laravel-dompdf
 4. Prioritas: fitur wajib dulu, bonus belakangan (lihat tahap 09).
 5. Jangan ganti stack tanpa alasan kuat (tetap Bootstrap CDN, auth manual, PhpSpreadsheet + DomPDF).
 6. Isolasi data antar role wajib diuji di setiap modul.
-
----
-
-## Struktur folder dokumentasi
-
-```text
-project-magang/
-├── README.md                          ← file ini (indeks utama)
-└── docs/
-    └── tahapan/
-        ├── 01-persiapan-setup.md
-        ├── 02-autentikasi-role.md
-        ├── 03-master-data.md
-        ├── 04-data-magang.md
-        ├── 05-log-kegiatan.md
-        ├── 06-dokumen.md
-        ├── 07-penilaian.md
-        ├── 08-dashboard-laporan.md
-        └── 09-polish-testing.md
-```
 
 ---
 

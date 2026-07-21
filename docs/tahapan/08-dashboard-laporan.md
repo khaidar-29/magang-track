@@ -1,7 +1,6 @@
 # Tahap 08 — Dashboard & Laporan
 
 **Urutan:** 08 dari 09  
-**Estimasi:** 5–7 jam  
 **Tujuan:** Dashboard berisi angka penting per role; halaman laporan berfilter; export Excel (PhpSpreadsheet) & PDF (DomPDF); notifikasi in-app sederhana.
 
 ← Sebelumnya: [07 — Penilaian](07-penilaian.md) · [Indeks](../../README.md) · Berikutnya: [09 — Polish & Testing](09-polish-testing.md) →

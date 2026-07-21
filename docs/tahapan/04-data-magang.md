@@ -1,7 +1,6 @@
 # Tahap 04 — Data Magang (Penempatan)
 
 **Urutan:** 04 dari 09  
-**Estimasi:** 4–6 jam  
 **Tujuan:** Menghubungkan mahasiswa ke tempat magang, periode, dan pembimbing industri; mengatur status penempatan; isolasi data per role.
 
 ← Sebelumnya: [03 — Master Data](03-master-data.md) · [Indeks](../../README.md) · Berikutnya: [05 — Log Kegiatan](05-log-kegiatan.md) →

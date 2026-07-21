@@ -1,7 +1,6 @@
 # Tahap 06 — Upload Dokumen
 
 **Urutan:** 06 dari 09  
-**Estimasi:** 3–5 jam  
 **Tujuan:** Mahasiswa mengunggah dokumen magang; pembimbing/admin bisa melihat & mengunduh dengan kontrol akses; file disimpan privat (bukan langsung di `public/`).
 
 ← Sebelumnya: [05 — Log Kegiatan](05-log-kegiatan.md) · [Indeks](../../README.md) · Berikutnya: [07 — Penilaian](07-penilaian.md) →

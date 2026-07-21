@@ -1,7 +1,6 @@
 # Tahap 07 — Penilaian
 
 **Urutan:** 07 dari 09  
-**Estimasi:** 4–6 jam  
 **Tujuan:** Admin mengelola aspek penilaian; pembimbing industri mengisi skor per aspek lalu finalisasi; mahasiswa melihat nilai akhir (read-only).
 
 ← Sebelumnya: [06 — Dokumen](06-dokumen.md) · [Indeks](../../README.md) · Berikutnya: [08 — Dashboard & Laporan](08-dashboard-laporan.md) →

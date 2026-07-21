@@ -1,7 +1,6 @@
 # Tahap 09 — Polish, Testing & Stabilisasi
 
 **Urutan:** 09 dari 09  
-**Estimasi:** 3–5 jam (+ waktu demo latihan)  
 **Tujuan:** Website dirapikan, diuji, seeder demo lengkap, dokumentasi akurat, siap ditampilkan / dipakai demo end-to-end.
 
 ← Sebelumnya: [08 — Dashboard & Laporan](08-dashboard-laporan.md) · [Indeks](../../README.md)

@@ -1,7 +1,6 @@
 # Tahap 05 — Log Kegiatan & Approval
 
 **Urutan:** 05 dari 09  
-**Estimasi:** 6–8 jam  
 **Tujuan:** Mahasiswa mencatat kegiatan harian; pembimbing industri menyetujui atau menolak. Ini **modul inti** MagangTrack.
 
 ← Sebelumnya: [04 — Data Magang](04-data-magang.md) · [Indeks](../../README.md) · Berikutnya: [06 — Dokumen](06-dokumen.md) →

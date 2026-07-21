@@ -1,7 +1,6 @@
 # Tahap 01 — Persiapan & Setup Project
 
 **Urutan:** 01 dari 09  
-**Estimasi:** 1–2 jam  
 **Tujuan:** Project Laravel siap jalan di lokal, layout Bootstrap CDN siap dipakai, database terkoneksi, repo rapi.
 
 ← [Kembali ke indeks](../../README.md) · Berikutnya: [02 — Autentikasi & Role](02-autentikasi-role.md) →
